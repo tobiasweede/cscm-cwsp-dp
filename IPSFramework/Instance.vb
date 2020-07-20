@@ -12,7 +12,7 @@ Public Class Instance
 
     Public Tours As Integer 'max number of tours
     Public PickingCapacity As Integer 'self-explanatory
-    Public Order() As orders 'customer orders
+    Public Order() As orders 'customer orders -- HIGHLY INEFFICIENT!
     Private xmlpath As String = "" 'loding path
 
 
