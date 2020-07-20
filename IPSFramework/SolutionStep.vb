@@ -1,20 +1,27 @@
 ﻿Public Class SoltuionStep
-    Public _plannedTasks As List(Of Tuple(Of Integer, Integer))
-    Public _predecessors As List(Of Tuple(Of Integer, Integer))
-    Public _kundenPositionen As List(Of Integer)
-    Public _waiterPosition As Integer
-    Public _teilZFW As Integer
-    Public Sub New()
-        _plannedTasks = New List(Of Tuple(Of Integer, Integer))
-        _predecessors = New List(Of Tuple(Of Integer, Integer))
-        _kundenPositionen = New List(Of Integer)
-        _WaiterPosition = -1
-        _TeilZFW = 0
+    Public plannedTasks As HashSet(Of Tuple(Of Integer, Integer))
+    Public Lambda As HashSet(Of Tuple(Of Integer, Integer))
+    Public kundenPositionen As List(Of Integer)
+    Public waiterPosition As Integer
+    Public teilZFW As Integer
+    Public stepBefore As SoltuionStep
+    Public Sub New() ' Default Konstruktor
+        Me.plannedTasks = New HashSet(Of Tuple(Of Integer, Integer))
+        Me.Lambda = New HashSet(Of Tuple(Of Integer, Integer))
+        Me.kundenPositionen = New List(Of Integer)
+        Me.waiterPosition = -1
+        Me.teilZFW = 0
+        Me.stepBefore = Nothing
     End Sub
-    Public Sub New(ByRef plannedTasks As List(Of Tuple(Of Integer, Integer)),
-                   ByRef predecessors As List(Of Tuple(Of Integer, Integer)),
-                   ByRef kundenPositionen As List(Of Integer)
+    Public Sub New(ByRef stepBefore As SoltuionStep,
+                   ByVal waiterPosition As Integer,
+                   ByVal teilZFW As Integer
                    )
-        _plannedTasks = New List(Of Tuple(Of Integer, Integer))(plannedTasks)
+        Me.stepBefore = stepBefore
+        Me.plannedTasks = New HashSet(Of Tuple(Of Integer, Integer))(stepBefore.plannedTasks)
+        Me.Lambda = New HashSet(Of Tuple(Of Integer, Integer))(stepBefore.Lambda)
+        Me.kundenPositionen = New List(Of Integer)(stepBefore.kundenPositionen)
+        Me.waiterPosition = stepBefore.waiterPosition
+        Me.teilZFW = stepBefore.teilZFW
     End Sub
 End Class
