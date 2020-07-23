@@ -5,6 +5,7 @@
     Public waiterPosition As Integer
     Public teilZFW As Integer
     Public stepBefore As SolutionStep
+    Public addedRequest As Tuple(Of Integer, Integer)
     Public Sub New() ' Default Konstruktor
         Me.servedRequests = New HashSet(Of Tuple(Of Integer, Integer))
         Me.Lambda = New HashSet(Of Tuple(Of Integer, Integer))

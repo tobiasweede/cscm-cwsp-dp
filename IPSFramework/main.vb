@@ -35,45 +35,60 @@
                 Requests.Add(KundenBestellung)
             Next
             Dim T As Integer = Phi.Count ' Anzahl der Serviceperioden
+            Dim lastStageZFW As List(Of Integer) = New List(Of Integer) ' Hilfsliste für die letzte Stage
             ' List containing all Stages with all Steps
-            Dim stages As List(Of Dictionary(Of Integer, SolutionStep)) = New List(Of Dictionary(Of Integer, SolutionStep))
+            Dim stages As List(Of List(Of SolutionStep)) = New List(Of List(Of SolutionStep))
             For i = 0 To T 'Für alle Serviceperioden
-                Dim stage As Dictionary(Of Integer, SolutionStep)
+                Dim stage As List(Of SolutionStep) = New List(Of SolutionStep) ' SortedList für aktuelle Stage
                 If i = 0 Then ' Virtueller initStep
                     Dim initStep As SolutionStep = New SolutionStep
                     For j = 0 To n - 1 ' Initialisiere Kundenpositionen
                         initStep.kundenPositionen.Add(-j)
                     Next
-                    stage = New Dictionary(Of Integer, SolutionStep)
-                    stage.Add(initStep.teilZFW, initStep) ' Füge initStep zur Stage hinzu
-                    stages.Add(stage) ' Füge Stage zu Liste der Stages hinzu
+                    stage = New List(Of SolutionStep)
+                    stage.Add(initStep) ' Füge initStep zu Stage 0 hinzu
+                    stages.Add(stage) ' Füge Stage 0 zu Liste der Stages hinzu
                     Continue For
                 End If
-                stage = New Dictionary(Of Integer, SolutionStep) ' Dictionary für aktuelle Stage
-                For Each previousStepKVPair In stages(i - 1)
-                    Dim feasibleRequests As List(Of Tuple(Of Integer, Integer)) = getFeasibleRequests(previousStepKVPair.Value)
+                For Each previousStep In stages(i - 1)
+                    Dim feasibleRequests As List(Of Tuple(Of Integer, Integer)) = getFeasibleRequests(previousStep)
                     For Each request In feasibleRequests
-                        Dim actualStep As SolutionStep = New SolutionStep(previousStepKVPair.Value)
+                        Dim actualStep As SolutionStep = New SolutionStep(previousStep)
                         actualStep.servedRequests.Add(request)
                         Dim movementDistance As Integer = Requests(request.Item1)(request.Item2) - actualStep.kundenPositionen(request.Item1)
                         For pos As Integer = 0 To actualStep.kundenPositionen.Count - 1
                             actualStep.kundenPositionen(pos) += movementDistance
                         Next
                         actualStep.waiterPosition = Requests(request.Item1)(request.Item2)
-                        addStepTime(request, previousStepKVPair.Value, actualStep) ' Füge delta(Z,Z') hinzu
-                        stage.Add(actualStep.teilZFW, actualStep) ' Füge actualStep zur Stage hinzu
+                        actualStep.addedRequest = request
+                        addStepTime(request, previousStep, actualStep) ' Füge delta(Z,Z') hinzu
+                        stage.Add(actualStep) ' Füge actualStep zur Stage hinzu
+                        If i = T Then
+                            lastStageZFW.Add(actualStep.teilZFW)
+                        End If
                     Next
                 Next
                 stages.Add(stage) ' Füge Stage zu Liste der Stages hinzu
-                Debug.Print(Requests(0)(0).ToString)
             Next
+            Dim bestIdx As Integer = lastStageZFW.IndexOf(lastStageZFW.Min) 'finde (esten) besten Index
+            Dim optimalStep As SolutionStep = stages(T)(bestIdx)
+            Console.WriteLine("Optimaler ZFW: " + optimalStep.teilZFW.ToString) ' Gebe besten ZFW aus
+            Dim solutionString As String = "" 'String für die Einplanungsreihenfolge
+            While optimalStep.stepBefore IsNot Nothing ' Gebe hinzugefügte Stages revers aus
+                solutionString = optimalStep.addedRequest.ToString + " " + solutionString
+                optimalStep = optimalStep.stepBefore
+            End While
+            Console.WriteLine("Reihenfolge der Kundenwünsche: ")
+            Console.WriteLine(solutionString)
+            Console.WriteLine("Beliebiger Key zum Beenden...")
+            Console.ReadLine()
         Next
     End Sub
 
     Function getFeasibleRequests(ByRef previousStep As SolutionStep) As List(Of Tuple(Of Integer, Integer))
         Dim feasibleRequests As List(Of Tuple(Of Integer, Integer)) = New List(Of Tuple(Of Integer, Integer))
         ' Dim tmp As Tuple(Of Integer, Integer) = New Tuple(Of Integer, Integer)(0, 0)
-        Dim movementDistance As Integer = 1
+        Dim movementDistance As Integer = 0
         While True 'Movement loop, solange bis unzulässig
             ' Prüfe ob nicht bediente Requests vorhanden
             If previousStep.servedRequests.Equals(Phi) Then
